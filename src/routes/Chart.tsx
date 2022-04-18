@@ -1,6 +1,8 @@
 import { useQuery } from "react-query";
 import { fetchCoinHistory } from "../api";
 import ApexChart from "react-apexcharts";
+import { useRecoilValue } from "recoil";
+import { isDarkAtom } from "../atoms";
 
 interface IHistorical {
   time_open: string;
@@ -18,8 +20,9 @@ interface CharProps {
 }
 
 function Chart({ coinId }: CharProps) {
+  const isDark = useRecoilValue(isDarkAtom);
   const { isLoading, data } = useQuery<IHistorical[]>(
-    ["ohlcv", coinId], 
+    ["ohlcv", coinId],
     () => fetchCoinHistory(coinId),
     {
       refetchInterval: 10000,
@@ -31,7 +34,6 @@ function Chart({ coinId }: CharProps) {
         "Loading chart..."
       ) : (
         <ApexChart
-          type="line"
           series={[
             {
               name: "price",
@@ -39,12 +41,9 @@ function Chart({ coinId }: CharProps) {
             },
           ]}
           options={{
-            theme: {
-              mode: "dark",
-            },
             chart: {
+              type: "candlestick",
               height: 500,
-              width: 500,
               toolbar: { show: false },
               background: "transparent",
             },
@@ -53,24 +52,44 @@ function Chart({ coinId }: CharProps) {
               curve: "smooth",
               width: 4,
             },
+            theme: {
+              mode:  isDark ? "dark" : "light",
+            },
+            title: {
+              text: "CandleStick Chart",
+              align: "left",
+            },
             xaxis: {
-              labels: { show: false },
+              labels: {
+                show: false,
+                datetimeFormatter: { month: "mmm 'yy" },
+              },
               axisTicks: { show: false },
               axisBorder: { show: false },
               type: "datetime",
               categories: data?.map((price) => price.time_close),
             },
-            yaxis: { show: false },
+            yaxis: {
+              show: false,
+            },
             fill: {
               type: "gradient",
-              gradient: { gradientToColors: ["#0be881"], stops: [0, 100] },
+              gradient: { gradientToColors: ['#0be881'], stops: [0, 100] },
             },
             tooltip: {
               y: {
-                formatter: (value) => `$ ${value.toFixed(2)}`, 
+                formatter: (value) => `$ ${value.toFixed(2)}`,
               },
             },
-            colors: ["#0fbcf9"],
+            plotOptions: {
+              candlestick: {
+                colors: {
+                  upward: '#00ff00',
+                  downward : '#ff0000'
+                }
+              }
+            },
+            colors: ['#0fbcf9'],
           }}
         />
       )}
